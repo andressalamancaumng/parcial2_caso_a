@@ -1,4 +1,4 @@
--- Esquema de base de datos — Clínica Multimedia Salud S.A.
+-- Esquema de base de datos — Clínica Multimedia Salud S.A.#
 -- Ejecutar como usuario postgres en la instancia sg-db
 
 CREATE DATABASE clinica_db;
