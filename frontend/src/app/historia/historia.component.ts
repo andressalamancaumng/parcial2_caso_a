@@ -25,7 +25,7 @@ import { environment } from '../../environments/environment';
         <!-- ← Sin longitud máxima ni validación del contenido -->
         <button type="submit">Guardar nota</button>
       </form>
-    </div>
+    </div>  
   `
 })
 export class HistoriaComponent implements OnInit {
@@ -56,8 +56,8 @@ export class HistoriaComponent implements OnInit {
 
   agregarNota() {
     this.http.post(
-      `${environment.apiUrl}/historia/${this.cedula}/nota`,
-      { contenido: this.nuevaNota, token: this.auth.token }  // ← token en body
+        `${environment.apiUrl}/historia/${this.cedula}/nota`,
+        { contenido: this.nuevaNota, token: this.auth.token }  // ← token en body
     ).subscribe(() => this.nuevaNota = '');
   }
 }
