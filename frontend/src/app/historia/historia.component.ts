@@ -1,3 +1,4 @@
+import * as DOMPurify from 'dompurify';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -40,7 +41,9 @@ export class HistoriaComponent implements OnInit {
     private sanitizer: DomSanitizer,
     public auth: AuthService
   ) {}
-
+  sanitizarHtml(contenido: string): string {
+  return DOMPurify.sanitize(contenido);
+  }
   ngOnInit() {
     this.cedula = this.route.snapshot.paramMap.get('cedula') || '';
 
@@ -49,7 +52,8 @@ export class HistoriaComponent implements OnInit {
       `${environment.apiUrl}/historia/${this.cedula}?auth=${this.auth.token}`
     ).subscribe(resp => {
       // ← VULNERABLE: bypassea la sanitización de Angular
-      this.historiaHtml = this.sanitizer.bypassSecurityTrustHtml(resp.contenido_html);
+      const htmlLimpio = this.sanitizarHtml(resp.contenido_html);
+      this.historiaHtml = this.sanitizer.bypassSecurityTrustHtml(htmlLimpio);
       this.pacienteNombre = resp.paciente_nombre;
     });
   }
