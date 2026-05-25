@@ -15,11 +15,6 @@ import { environment } from '../../environments/environment';
       <!-- ← VULNERABLE: renderiza HTML del servidor sin sanitizar — XSS -->
       <div [innerHTML]="historiaHtml"></div>
 
-      <!-- ← VULNERABLE: token JWT expuesto en la URL -->
-      <a [href]="'/historia/' + cedula + '?token=' + auth.token">
-        Compartir con otro médico
-      </a>
-
       <form (ngSubmit)="agregarNota()">
         <textarea [(ngModel)]="nuevaNota" name="nota"
                   placeholder="Nueva nota clínica"></textarea>
