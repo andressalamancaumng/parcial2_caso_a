@@ -1,0 +1,6 @@
+﻿sonar.projectKey=parcial2-caso-a-antes
+sonar.projectName=Parcial2 - Caso A - ANTES
+sonar.sources=backend
+sonar.python.version=3
+sonar.host.url=http://localhost:9000
+sonar.login=sqa_4d8167086c54882b4f4c31e7033a636cedbd56d7
