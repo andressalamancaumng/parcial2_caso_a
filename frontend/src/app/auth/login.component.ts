@@ -54,9 +54,22 @@ export class LoginComponent {
     this.error = '';
     this.loading = true;
     this.auth.login(this.email, this.password).subscribe({
-      next: (res) => {
-        this.auth.saveToken(res.access_token);
-        this.router.navigate(['/historia', '']);
+      next: (res: any) => {
+        // Caso 1: El usuario tiene MFA activado
+        if (res.mfa_required === true && res.partial_token) {
+          this.auth.savePartialToken(res.partial_token);
+          this.router.navigate(['/mfa']);
+        }
+        // Caso 2: El usuario NO tiene MFA, devuelve token final directamente
+        else if (res.access_token) {
+          this.auth.saveToken(res.access_token);
+          this.router.navigate(['/historia', '']); // o la ruta que corresponda
+        }
+        // Caso 3: Respuesta inesperada
+        else {
+          this.error = 'Credenciales inválidas';
+        }
+        this.loading = false;
       },
       error: () => {
         this.error = 'Credenciales inválidas';

@@ -1,0 +1,17 @@
+<div class="reporte-container">
+  <h2>Reporte de auditoría de accesos</h2>
+  <form (ngSubmit)="generarReporte()">
+    <div>
+      <label>Fecha inicio (YYYY-MM-DD)</label>
+      <input type="date" [(ngModel)]="fechaInicio" name="fechaInicio" required>
+    </div>
+    <div>
+      <label>Fecha fin (YYYY-MM-DD)</label>
+      <input type="date" [(ngModel)]="fechaFin" name="fechaFin" required>
+    </div>
+    <button type="submit" [disabled]="loading">
+      {{ loading ? 'Generando...' : 'Generar reporte PDF' }}
+    </button>
+    <p *ngIf="mensaje" class="mensaje">{{ mensaje }}</p>
+  </form>
+</div>
