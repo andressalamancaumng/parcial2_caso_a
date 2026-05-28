@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.auth.router import router as auth_router
 from src.historias.router import router as historia_router
+from src.routes.pdf import router as pdf_router 
 
 app = FastAPI(title="Clínica Multimedia Salud S.A. API", version="1.0.0")
 
@@ -27,6 +28,8 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(historia_router, prefix="/api", tags=["historias"])
+app.include_router(pdf_router, prefix="/api", tags=["pdfs"])
+
 
 @app.get("/health")
 def health():

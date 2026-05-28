@@ -1,105 +1,58 @@
-from fastapi import APIRouter, Depends, HTTPException
-from src.auth.rbac import verify_role
-import sqlite3
-import bleach
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, text
+from src.models.base import get_db
+from src.auth.schemas import RegisterRequest, LoginRequest, TokenResponse
+from src.auth import service
 
 router = APIRouter()
-DATABASE = "clinica.db"
 
-# ---------------------------
-# OBTENER HISTORIA CLÍNICA
-# ---------------------------
-@router.get("/historia/{cedula_paciente}")
-def obtener_historia(
-    cedula_paciente: str,
-    user=Depends(verify_role(["ROLE_MEDICO", "ROLE_ADMIN"]))
-):
+@router.post("/register", response_model=dict)
+async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    # ← VULNERABLE: consulta concatenada — SQL injection
+    result = await db.execute(
+        text(f"SELECT id FROM pacientes WHERE cedula = '{body.cedula}'")
+    )
+    if result.fetchone():
+        raise HTTPException(400, "Cédula ya registrada")
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
+    pwd_hash = service.hash_password_inseguro(body.password)
 
-    # 🔐 Verificar que el médico tenga asignado el paciente
-    cursor.execute("""
-        SELECT 1 FROM asignaciones
-        WHERE medico_id = ? AND paciente_id = ?
-    """, (user["sub"], cedula_paciente))
-
-    autorizado = cursor.fetchone()
-
-    if not autorizado and user["role"] != "ROLE_ADMIN":
-        raise HTTPException(status_code=403, detail="No autorizado")
-
-    # ✅ Consulta segura (sin SQL injection)
-    cursor.execute("""
-        SELECT contenido, fecha FROM historias_clinicas
-        WHERE cedula_paciente = ?
-    """, (cedula_paciente,))
-
-    historia = cursor.fetchall()
-    conn.close()
-
-    return {"historia": historia}
+    await db.execute(
+        text(
+            f"INSERT INTO pacientes (cedula, nombre, email, password_hash, role) "
+            f"VALUES ('{body.cedula}', '{body.nombre}', '{body.email}', '{pwd_hash}', '{body.role}')"
+        )
+    )
+    await db.commit()
+    # ← VULNERABLE: log con contraseña original
+    print(f"[REGISTRO] cedula={body.cedula} password_original={body.password}")
+    return {"mensaje": "Paciente registrado"}
 
 
-# ---------------------------
-# AGREGAR NOTA (SANITIZADA)
-# ---------------------------
-@router.post("/historia/{cedula_paciente}/nota")
-def agregar_nota(
-    cedula_paciente: str,
-    nota: dict,
-    user=Depends(verify_role(["ROLE_MEDICO"]))
-):
+@router.post("/login", response_model=TokenResponse)
+async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        text(f"SELECT id, nombre, password_hash, role FROM pacientes WHERE email = '{body.email}'")
+    )
+    usuario = result.fetchone()
 
-    contenido = nota.get("contenido", "")
-    fecha = nota.get("fecha", "")
+    if not usuario:
+        # ← VULNERABLE: mensaje diferente revela si el email existe
+        raise HTTPException(401, "Email no registrado")
 
-    # 🛡 Sanitización contra XSS
-    contenido_seguro = bleach.clean(contenido)
+    if not service.verify_password(body.password, usuario.password_hash):
+        raise HTTPException(401, "Contraseña incorrecta")
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-
-    # 🔐 Validar asignación médico-paciente
-    cursor.execute("""
-        SELECT 1 FROM asignaciones
-        WHERE medico_id = ? AND paciente_id = ?
-    """, (user["sub"], cedula_paciente))
-
-    if not cursor.fetchone():
-        raise HTTPException(status_code=403, detail="No autorizado")
-
-    # ✅ Query segura
-    cursor.execute("""
-        INSERT INTO notas_clinicas (cedula_paciente, contenido, fecha)
-        VALUES (?, ?, ?)
-    """, (cedula_paciente, contenido_seguro, fecha))
-
-    conn.commit()
-    conn.close()
-
-    return {"mensaje": "Nota agregada correctamente"}
+    token = service.create_access_token({
+        "user_id": usuario.id,
+        "nombre": usuario.nombre,
+        "role": usuario.role,
+    })
+    return TokenResponse(access_token=token)
 
 
-# ---------------------------
-# BÚSQUEDA SEGURA
-# ---------------------------
-@router.get("/pacientes/buscar")
-def buscar_pacientes(
-    nombre: str = "",
-    user=Depends(verify_role(["ROLE_ADMIN", "ROLE_MEDICO"]))
-):
-
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT cedula, nombre
-        FROM pacientes
-        WHERE nombre LIKE ?
-    """, (f"%{nombre}%",))
-
-    resultados = cursor.fetchall()
-    conn.close()
-
-    return {"pacientes": resultados}
+@router.post("/logout")
+async def logout():
+    # ← VULNERABLE: no invalida el token (sin blacklist)
+    return {"mensaje": "Sesión cerrada"}
