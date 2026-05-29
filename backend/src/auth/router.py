@@ -100,7 +100,7 @@ async def login(
         
         await register_audit_event(
             db=db,
-            usuario_id="None",
+            usuario_id=None,
             action="LOGIN",
             result="FAILED",
             ip_address=request.client.host
