@@ -56,10 +56,8 @@ export class HistoriaComponent implements OnInit {
   return DOMPurify.sanitize(contenido);
   }
   ngOnInit() {
-    this.cedula = this.route.snapshot.paramMap.get('cedula') || '';
-    this.http.get<any>(
-      `${environment.apiUrl}/historia/${this.cedula}?auth=${this.auth.token}`
-    ).subscribe(resp => {
+    // No tomamos la cédula de la URL
+    this.http.get<any>(`${environment.apiUrl}/historia`).subscribe(resp => {
       const htmlLimpio = this.sanitizarHtml(resp.contenido_html);
       this.historiaHtml = this.sanitizer.bypassSecurityTrustHtml(htmlLimpio);
       this.pacienteNombre = resp.paciente_nombre;
