@@ -105,6 +105,7 @@ def buscar_pacientes(
     resultados = cursor.fetchall()
     conn.close()
 
+<<<<<<< Updated upstream
     return {"pacientes": resultados}
 
 from fastapi import Body
@@ -178,3 +179,6 @@ async def mfa_verify(body: MfaVerifyBody):
     if not user.get("mfa_enabled"):
         auth_svc.set_mfa_enabled(user_id, True)
     return {"access_token": access_token, "token_type": "bearer"}
+=======
+    return {"pacientes": resultados}
+>>>>>>> Stashed changes
