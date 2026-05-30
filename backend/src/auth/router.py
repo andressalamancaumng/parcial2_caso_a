@@ -103,3 +103,26 @@ def buscar_pacientes(
     conn.close()
 
     return {"pacientes": resultados}
+
+from fastapi import Body
+from pydantic import BaseModel
+import os, asyncio
+from src.services.auth_service import AuthService
+
+auth_svc = AuthService()
+
+class LoginPayload(BaseModel):
+    document_number: str
+    password: str
+
+@router.post("/login")
+async def login(payload: LoginPayload):
+    user = await auth_svc.authenticate_user(payload.document_number, payload.password)
+    if not user:
+        await auth_svc.log_failed_login(payload.document_number)
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    if user.get("mfa_enabled"):
+        token = auth_svc.create_partial_token(user["id"])
+        return {"session_token": token, "mfa_required": True, "expires_in": int(os.getenv("PARTIAL_TOKEN_EXPIRE_SECONDS", "300"))}
+    access_token = auth_svc.create_access_token(user["id"], user["role"])
+    return {"access_token": access_token, "token_type": "bearer", "mfa_required": False}
