@@ -1,37 +1,66 @@
-from pydantic import BaseModel, EmailStr, field_validator
-import re
+from pydantic import BaseModel, EmailStr, Field
+from datetime import date
 
 class RegisterRequest(BaseModel):
-    cedula: str
-    nombre: str
+
+    tipo_documento: str = Field(
+        min_length=2,
+        max_length=10
+    )
+
+    numero_documento: str = Field(
+        min_length=5,
+        max_length=20
+    )
+
+    nombres: str = Field(
+        min_length=3,
+        max_length=120
+    )
+
+    apellidos: str = Field(
+        min_length=3,
+        max_length=120
+    )
+
+    fecha_nacimiento: date
+
+    sexo_biologico: str = Field(
+        min_length=1,
+        max_length=20
+    )
+
+    grupo_sanguineo: str = Field(
+        min_length=2,
+        max_length=5
+    )
+
+    telefono: str = Field(
+        min_length=7,
+        max_length=20
+    )
+
     email: EmailStr
-    password: str
-    role: str = "ROLE_PACIENTE"
-
-    @field_validator("password")
-    @classmethod
-    def password_strength(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError("Mínimo 8 caracteres")
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Debe contener al menos una mayúscula")
-        if not re.search(r"\d", v):
-            raise ValueError("Debe contener al menos un número")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
-            raise ValueError("Debe contener al menos un carácter especial")
-        return v
-
-    @field_validator("cedula")
-    @classmethod
-    def cedula_format(cls, v: str) -> str:
-        if not re.match(r"^\d{7,10}$", v):
-            raise ValueError("Cédula inválida")
-        return v
 
 class LoginRequest(BaseModel):
+
     email: EmailStr
-    password: str
+
+    password: str = Field(
+        min_length=1,
+        max_length=128
+    )
+
 
 class TokenResponse(BaseModel):
+
     access_token: str
-    token_type: str = "bearer"
+
+    token_type: str
+
+    requires_mfa: bool = False
+
+    requires_password_change: bool = False
+
+    password_expired: bool = False
+
