@@ -1,0 +1,17 @@
+<div class="orden-container">
+  <h2>Generar orden médica</h2>
+  <form (ngSubmit)="generarOrden()">
+    <div>
+      <label>ID del paciente *</label>
+      <input type="text" [(ngModel)]="pacienteId" name="pacienteId" required>
+    </div>
+    <div>
+      <label>ID de atención (opcional)</label>
+      <input type="text" [(ngModel)]="atencionId" name="atencionId">
+    </div>
+    <button type="submit" [disabled]="loading">
+      {{ loading ? 'Generando...' : 'Generar orden PDF' }}
+    </button>
+    <p *ngIf="mensaje" class="mensaje">{{ mensaje }}</p>
+  </form>
+</div>
