@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 import random
 import secrets
@@ -313,7 +313,7 @@ async def register_patient_user(
     except Exception as e:
 
         logger.error(
-            f"EMAIL_ERROR: {str(e)}"
+            f"EMAIL_ERROR"
         )
 
         await register_audit_event(
@@ -359,7 +359,7 @@ async def check_login_block(
 
     if (
         row.bloqueado_hasta
-        and row.bloqueado_hasta > datetime.utcnow()
+        and row.bloqueado_hasta > datetime.now(timezone.utc)
     ):
 
         raise HTTPException(
@@ -429,7 +429,7 @@ async def register_failed_attempt(
         if new_attempts >= MAX_LOGIN_ATTEMPTS:
 
             blocked_until = (
-                datetime.utcnow()
+                datetime.now(timezone.utc)
                 + timedelta(minutes=BLOCK_MINUTES)
             )
 
@@ -559,7 +559,7 @@ async def login_user(
     if (
         user.debe_cambiar_password
         and user.password_temporal_expira
-        and datetime.utcnow()
+        and datetime.now(timezone.utc)
             > user.password_temporal_expira
     ):
 
