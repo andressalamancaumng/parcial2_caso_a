@@ -1,0 +1,23 @@
+<div class="mfa-container">
+  <h2>Autenticación de dos factores</h2>
+  <p>Ingrese el código de 6 dígitos generado por su aplicación autenticadora (Google Authenticator, Microsoft Authenticator, etc.)</p>
+  
+  <form (ngSubmit)="onVerify()">
+    <div>
+      <label>Código</label>
+      <input 
+        type="text" 
+        [(ngModel)]="code" 
+        name="code" 
+        required 
+        pattern="[0-9]{6}" 
+        maxlength="6"
+        placeholder="123456"
+      >
+    </div>
+    <p *ngIf="error" class="error">{{ error }}</p>
+    <button type="submit" [disabled]="loading">
+      {{ loading ? 'Verificando...' : 'Verificar' }}
+    </button>
+  </form>
+</div>
