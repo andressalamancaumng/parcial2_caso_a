@@ -1,7 +1,7 @@
 import os
 import jwt
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timmezone, timedelta
 from fastapi import HTTPException, status
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -13,7 +13,7 @@ if not JWT_SECRET_KEY:
 
 def create_access_token(data: dict, expires_minutes: int = 60):
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     payload = {
         "sub": data["sub"],
